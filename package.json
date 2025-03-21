@@ -1,6 +1,6 @@
 {
   "name": "facebook-oauth",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Facebook OAuth PKCE integration for modern browsers",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
@@ -30,6 +30,10 @@
   ],
   "author": "Felipe Pessina",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Pessina/facebook-oauth"
+  },
   "packageManager": "pnpm@10.6.3",
   "devDependencies": {
     "@types/node": "22.13.11",
