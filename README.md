@@ -1,6 +1,6 @@
 # Facebook OAuth
 
-A TypeScript library for implementing Facebook OAuth in modern browsers.
+A TypeScript library for implementing Facebook OAuth using PKCE
 
 ## Installation
 
@@ -17,12 +17,8 @@ pnpm add facebook-oauth
 
 ## Usage
 
-```typescript
-"use client";
-
-import { Button } from "@/components/ui/button";
-import { useEnv } from "@/hooks/useEnv";
-import { useFacebookAuth } from "@/hooks/useFacebookAuth";
+```ts twoslash
+import { useFacebookAuth } from "facebook-oauth";
 
 type FacebookButtonProps = {
   text: string;
@@ -37,10 +33,9 @@ export default function FacebookButton({
   onError,
   nonce,
 }: FacebookButtonProps) {
-  const { facebookAppId } = useEnv();
   const { initiateLogin } = useFacebookAuth({
     scope: "email",
-    appId: facebookAppId,
+    appId: "your-facebook-app-id",
     onSuccess: (idToken) => {
       if (idToken) {
         onSuccess(idToken);
@@ -59,20 +54,14 @@ export default function FacebookButton({
     });
   };
 
-  return (
-    <Button
-      onClick={handleLogin}
-      className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-    >
-      {text}
-    </Button>
-  );
+  return <button onClick={handleLogin}>{text}</button>;
 }
-
 ```
 
 ## License
 
-MIT 
+MIT
 
 ## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
