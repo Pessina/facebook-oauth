@@ -1,0 +1,41 @@
+{
+  "name": "facebook-oauth",
+  "version": "0.1.0",
+  "description": "Facebook OAuth integration for modern browsers",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsup && cp README.md LICENSE package.json dist/",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "facebook",
+    "oauth",
+    "authentication"
+  ],
+  "author": "Felipe Pessina",
+  "license": "MIT",
+  "packageManager": "pnpm@10.6.3",
+  "devDependencies": {
+    "@types/node": "22.13.11",
+    "@types/react": "^19.0.12",
+    "tsup": "8.4.0",
+    "typescript": "5.8.2"
+  },
+  "dependencies": {
+    "react": "^19.0.0"
+  }
+}
