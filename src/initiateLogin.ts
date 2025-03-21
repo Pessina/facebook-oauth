@@ -33,25 +33,25 @@ export const initiateLogin = async (config: FacebookAuthConfig) => {
   let popup: Window | null = null;
 
   const cleanup = () => {
-    safeStorage.removeItem(OAUTH_CONFIG.STORAGE_KEYS.CODE_VERIFIER);
-    safeStorage.removeItem(OAUTH_CONFIG.STORAGE_KEYS.STATE);
+    localStorage.removeItem(OAUTH_CONFIG.STORAGE_KEYS.CODE_VERIFIER);
+    localStorage.removeItem(OAUTH_CONFIG.STORAGE_KEYS.STATE);
     if (popup && !popup.closed) {
       popup.close();
     }
   };
 
   try {
-    if (!config.appId) {
-      throw new Error("Facebook App ID is required");
-    }
-
     const codeVerifier = generatePKCEVerifier();
     const codeChallenge = await generatePKCEChallenge(codeVerifier);
     const state = generatePKCEVerifier();
     const nonce = config?.nonce || generatePKCEVerifier();
 
-    safeStorage.setItem(OAUTH_CONFIG.STORAGE_KEYS.CODE_VERIFIER, codeVerifier);
-    safeStorage.setItem(OAUTH_CONFIG.STORAGE_KEYS.STATE, state);
+    localStorage.setItem(OAUTH_CONFIG.STORAGE_KEYS.CODE_VERIFIER, codeVerifier);
+    localStorage.setItem(OAUTH_CONFIG.STORAGE_KEYS.STATE, state);
+
+    if (!config.appId) {
+      throw new Error("Facebook App ID is required");
+    }
 
     const redirectUri =
       config.callbackUri ?? window.location.href.split("?")[0];
@@ -63,7 +63,7 @@ export const initiateLogin = async (config: FacebookAuthConfig) => {
     url.searchParams.append("redirect_uri", redirectUri);
     url.searchParams.append("state", state);
     url.searchParams.append("scope", "openid " + (config?.scope || ""));
-    url.searchParams.append("response_type", config.responseType || "code");
+    url.searchParams.append("response_type", "code");
     url.searchParams.append("code_challenge", codeChallenge);
     url.searchParams.append("code_challenge_method", "S256");
     url.searchParams.append("nonce", nonce);
@@ -76,18 +76,8 @@ export const initiateLogin = async (config: FacebookAuthConfig) => {
           const { code, returnedState } = event.data;
 
           try {
-            const storedState = safeStorage.getItem(
-              OAUTH_CONFIG.STORAGE_KEYS.STATE
-            );
-            if (!storedState || returnedState !== storedState) {
-              throw new Error("State validation failed - possible CSRF attack");
-            }
-
-            const storedCodeVerifier = safeStorage.getItem(
-              OAUTH_CONFIG.STORAGE_KEYS.CODE_VERIFIER
-            );
-            if (!storedCodeVerifier) {
-              throw new Error("Code verifier not found in browser storage");
+            if (returnedState !== state) {
+              throw new Error("Invalid state parameter");
             }
 
             const tokenUrl = new URL(
@@ -97,7 +87,7 @@ export const initiateLogin = async (config: FacebookAuthConfig) => {
             const params = new URLSearchParams({
               client_id: config.appId,
               redirect_uri: redirectUri,
-              code_verifier: storedCodeVerifier,
+              code_verifier: codeVerifier,
               code: code,
             });
 
@@ -110,18 +100,7 @@ export const initiateLogin = async (config: FacebookAuthConfig) => {
             );
 
             if (!response.ok) {
-              const errorData = await response.json().catch(() => ({}));
-              throw new Error(
-                `Failed to fetch access token: ${response.status} ${
-                  response.statusText
-                }${
-                  errorData.error
-                    ? ` - ${
-                        errorData.error.message || JSON.stringify(errorData)
-                      }`
-                    : ""
-                }`
-              );
+              throw new Error("Failed to fetch access token");
             }
 
             const data = (await response.json()) as FacebookTokenResponse;
@@ -130,22 +109,13 @@ export const initiateLogin = async (config: FacebookAuthConfig) => {
               config.onSuccess(data.id_token);
               resolve();
             } else {
-              throw new Error("Access token not received from Facebook");
+              throw new Error("Access token not received");
             }
           } catch (error) {
             if (error instanceof Error && config.onError) {
               config.onError(error);
-            } else {
-              console.error(
-                "Unknown error during Facebook authentication:",
-                error
-              );
-              if (config.onError) {
-                config.onError(
-                  new Error("Unknown error during Facebook authentication")
-                );
-              }
             }
+            console.error(error);
             reject(error);
           } finally {
             window.removeEventListener("message", messageHandler);
@@ -155,70 +125,29 @@ export const initiateLogin = async (config: FacebookAuthConfig) => {
           const { error } = event.data;
           window.removeEventListener("message", messageHandler);
           cleanup();
-          const errorMessage =
-            typeof error === "string"
-              ? error
-              : "Facebook authentication failed";
-          const authError = new Error(errorMessage);
-          if (config.onError) {
-            config.onError(authError);
-          }
-          reject(authError);
+          reject(new Error(error));
         }
       };
 
       window.addEventListener("message", messageHandler);
 
-      const width = 600;
-      const height = 700;
-      const left = Math.max(
-        0,
-        (window.innerWidth - width) / 2 + window.screenX
-      );
-      const top = Math.max(
-        0,
-        (window.innerHeight - height) / 2 + window.screenY
-      );
-
       popup = window.open(
         url.toString(),
         "facebook-auth-window",
-        `width=${width},height=${height},left=${left},top=${top},toolbar=no,menubar=no,location=no,status=no,scrollbars=yes,resizable=yes,noopener,noreferrer`
+        `width=600,height=700,left=${Math.max(
+          0,
+          (window.innerWidth - 600) / 2 + window.screenX
+        )},top=${Math.max(
+          0,
+          (window.innerHeight - 700) / 2 + window.screenY
+        )},toolbar=no,menubar=no,location=no,status=no,scrollbars=yes`
       );
 
-      if (!popup || popup.closed || typeof popup.closed === "undefined") {
-        const popupError = new Error(
-          "Popup was blocked by your browser. Please allow popups for this site and try again."
+      if (!popup) {
+        throw new Error(
+          "Failed to open popup window. Please allow popups for this site."
         );
-        if (config.onError) {
-          config.onError(popupError);
-        }
-        reject(popupError);
-        cleanup();
       }
-
-      const timeoutId = setTimeout(() => {
-        window.removeEventListener("message", messageHandler);
-        cleanup();
-        const timeoutError = new Error(
-          "Authentication timed out after 5 minutes"
-        );
-        if (config.onError) {
-          config.onError(timeoutError);
-        }
-        reject(timeoutError);
-      }, 5 * 60 * 1000);
-
-      const originalResolve = resolve;
-      const originalReject = reject;
-      resolve = () => {
-        clearTimeout(timeoutId);
-        originalResolve();
-      };
-      reject = (reason) => {
-        clearTimeout(timeoutId);
-        originalReject(reason);
-      };
     });
 
     await authPromise;
@@ -226,11 +155,7 @@ export const initiateLogin = async (config: FacebookAuthConfig) => {
     cleanup();
     if (error instanceof Error && config.onError) {
       config.onError(error);
-    } else if (config.onError) {
-      config.onError(
-        new Error("An unknown error occurred during authentication")
-      );
     }
-    console.error("Facebook authentication error:", error);
+    console.error(error);
   }
 };

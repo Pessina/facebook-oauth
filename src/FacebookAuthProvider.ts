@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { handleLoginCallBack } from "./handleLoginCallBack";
 
-export const FacebookProvider = ({
+export const FacebookAuthProvider = ({
   children,
 }: {
   children: React.ReactNode;
