@@ -1,6 +1,6 @@
 {
   "name": "facebook-oauth-pkce",
-  "version": "0.0.1-beta.7",
+  "version": "0.0.1",
   "description": "Facebook OAuth PKCE integration for modern browsers",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
