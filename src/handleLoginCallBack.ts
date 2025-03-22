@@ -1,9 +1,17 @@
-export const handleLoginCallBack = () => {
-  const urlSearchParams = new URLSearchParams(window.location.search);
-  const code = urlSearchParams.get("code");
-  const state = urlSearchParams.get("state");
-  const error = urlSearchParams.get("error");
-  const errorReason = urlSearchParams.get("error_reason");
+/**
+ * Handles the callback from Facebook OAuth login process
+ *
+ * This function processes the URL parameters returned from Facebook's OAuth flow,
+ * extracts the authorization code and state, and communicates the result back to
+ * the opener window through postMessage.
+ *
+ * @param searchParams - URLSearchParams object containing the callback parameters
+ */
+export const handleLoginCallBack = (searchParams: URLSearchParams) => {
+  const code = searchParams.get("code");
+  const state = searchParams.get("state");
+  const error = searchParams.get("error");
+  const errorReason = searchParams.get("error_reason");
 
   if (window.opener) {
     if (error || errorReason) {

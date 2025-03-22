@@ -1,8 +1,4 @@
-import {
-  generatePKCEVerifier,
-  generatePKCEChallenge,
-  safeStorage,
-} from "./utils";
+import { generatePKCEVerifier, generatePKCEChallenge } from "./utils";
 
 export const OAUTH_CONFIG = {
   FACEBOOK_API_VERSION: "v21.0",
@@ -29,6 +25,19 @@ export interface FacebookAuthConfig {
   onError?: (error: Error) => void;
 }
 
+/**
+ * Initiates the Facebook OAuth login process with PKCE flow
+ *
+ * @param config - Configuration object for Facebook authentication
+ * @param config.appId - Facebook App ID (required)
+ * @param config.scope - Additional permission scopes to request (optional)
+ * @param config.nonce - Custom nonce for additional security (optional)
+ * @param config.responseType - Response type, defaults to "code" (optional)
+ * @param config.callbackUri - Custom redirect URI (optional, defaults to current URL)
+ * @param config.onSuccess - Callback function when authentication succeeds (optional)
+ * @param config.onError - Callback function when authentication fails (optional)
+ * @returns Promise that resolves when the authentication flow completes
+ */
 export const initiateLogin = async (config: FacebookAuthConfig) => {
   let popup: Window | null = null;
 

@@ -1,6 +1,6 @@
 {
-  "name": "facebook-oauth",
-  "version": "0.0.2",
+  "name": "facebook-oauth-pkce",
+  "version": "0.0.1-beta.7",
   "description": "Facebook OAuth PKCE integration for modern browsers",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
@@ -26,6 +26,7 @@
   "keywords": [
     "facebook",
     "oauth",
+    "pkce",
     "authentication"
   ],
   "author": "Felipe Pessina",
